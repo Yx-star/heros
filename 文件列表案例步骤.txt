@@ -1,0 +1,78 @@
+对于动态页面完成步骤
+创建服务器
+    var http = require('http')
+    var server = http.createServer()
+    server.listen(3003,() => {
+        console.log('http://127.0.0.1:3003')
+    })
+    server.on('request',(req,res) => {
+    })
+
+1.准备数据:读取目录结构：fs.readdir(path,callback) >> 异步往往伴随着回调函数
+fs.readdir(__dirname,(err,data) => {
+        if(err){
+            res.end('404')
+        }else{
+            // 创建一个变量用来存储当前已经获取的数量
+            var count = 0
+            // 创建数组用来存储数据
+            var filesArr = []
+            // 我们可以使用文件名拼接__dirname,获取文件或文件夹的全路径，根据全路径找到对应的文件或文件夹，获取它们的详细信息
+            // 循环获取每一个文件或文件夹的详细信息
+            for(let i=0;i<data.length;i++){
+                // fs.stat函数可以根据全路径获取文件或文件夹详细信息
+                fs.stat(__dirname +"/"+data[i],(err1,stat) => {
+                    if(err1){
+                        res.end('404')
+                    }
+                    else{
+                        // 每个Stat对应着页面中的一行数据。一行数据有多个属性值，意味着每行数据是一个对象。所以这里我们根据每一个Stat生成一个对象
+                        var singer = {}
+                        console.log(i)
+                        // 为对象的属性赋值
+                        singer.filename = data[i]
+                        singer.size = stat.size
+                        singer.mtime = stat.mtime
+                        // isFile函数可以用来判断当前对象是文件还是文件夹
+                        singer.isFile = stat.isFile()
+                        // 将创建好的对象添加到数组，以便后期模块使用
+                        filesArr.push(singer)
+                        // 读取一个，计数+1
+                        count ++
+                        if(count === data.length){
+                            console.log(filesArr)
+                        }
+                    }
+                    
+                })
+            }
+        }
+    })
+
+
+2.创建模板文件
+    <tbody id="tbody">
+        {{each lists as value index}}
+            <tr>
+                <td>
+                    <a class="icon {{value.isFile?'file':'dir'}}" href="javascript:;">{{value.filename}}</a>
+                </td>
+                <td class="detailsColumn" data-value="0">{{value.isFile?value.size:''}}</td>
+                <td class="detailsColumn" data-value="1534667875">{{value.mtime}}</td>
+            </tr>
+        {{/each}}
+    </tbody>
+
+3.调用模板引擎
+    1.下载
+    2.引入
+    3.调用函数
+        template.complie(source) >> render(data)
+        template.render(source,data)
+        template(filename,data)
+    4.代码
+        if(count === data.length){
+            console.log(filesArr)
+            var html = template(__dirname +"/views/list.html",{lists:filesArr})
+            res.end(html)
+        }

@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <title>Hero - Admin</title>
+    <link rel="stylesheet" href="/node_modules/bootstrap/dist/css/bootstrap.css">
+    <style>
+        .hero-list img {
+            width: 50px;
+        }
+    </style>
+</head>
+
+<body>
+    <header>
+        <div class="page-header container">
+            <h1>王者荣耀 <small>英雄管理器</small></h1>
+        </div>
+    </header>
+    <div class="container hero-list">
+        <form>
+            <table class="table table-hover">
+                <input type="hidden" name='id' value="{{id}}">
+                <tr>
+                    <td>姓名：</td>
+                    <td><input type="text" name="name" value='{{name}}'></td>
+                </tr>
+                <tr>
+                    <td>性别：</td>
+                    {{if gender=='男'}}
+                    <td><input id="nan" name="gender" value="男" type="radio" checked><label for="nan">男</label> <input name="gender" value="女" type="radio" id="nv"><label for="nv">女</label></td>
+                    {{else if gender=='女'}}
+                    <td><input id="nan" name="gender" value="男" type="radio" ><label for="nan">男</label> <input name="gender" value="女" type="radio" id="nv" checked><label for="nv">女</label></td>
+                    {{/if}}
+                </tr>
+                <tr>
+                    <td>头像：</td>
+                    <td><img src="/images/{{img}}" alt="" id="photo" style='width:150px'>
+                    <input type="file" id="img"></td>
+                    <!-- 使用隐藏域来存储图片的名称：目的只有一个，后期更方便的获取到文件名称 -->
+                    <!-- 在编辑的时候一定要存储当前图片名称，否则当后期用户没有真正的对图片进行修改的时候，那么就没有图片数据了 -->
+                    <input type="hidden" name='img' value="{{img}}">
+                </tr>
+                <tr>
+                    <td></td>
+                    <td><input type="button" id="sub" value="编辑"></td>
+                </tr>
+            </table>
+        </form>
+    </div>
+</body>
+<script src = "/node_modules/jquery/dist/jquery.min.js"></script>
+<script>
+    // 我们希望用户一旦选择了文件就进行文件的上传操作：好处就是能够提高用户体验
+    $('#img').on('change',function(){
+        // 1.上传文件往往会使用FormData对象来收集文件数据
+        var formdata = new FormData()
+        // 2.获取文件数据
+        var file = document.querySelector('#img').files[0]
+        // 3. 将文件数据添加到formdata对象中，这个formdata对象可以直接做为数据传递
+        formdata.append('img',file) //file
+        formdata.append('username','jack') //fields
+        // 发送异步请求，实现文件数据的上传
+        // 当使用formdata+ajax实现文件上传的时候，必须添加两个属性设置
+        $.ajax({
+            type:'post',
+            // 接口--路由
+            url:'/fileUpload',
+            data:formdata,
+            dataType:'json',
+            processData:false,//告诉ajax不要处理数据，由formdata处理
+            contentType:false,//告诉ajax不要对数据进行编码处理，由formdata处理
+            success:function(result){
+                console.log(result)
+                if(result.code == 200){
+                    // 实现预览
+                    $("#photo").attr('src','/images/'+result.myimg)
+                    // 存储图片名称到隐藏域
+                    $('[name=img]').val(result.myimg)
+                }
+            }
+        })
+    })
+
+    $('#sub').on('click',function(e){
+        e.preventDefault(); 
+        $.ajax({
+            url:'/edit',
+            type:'post',
+            data:$('form').serialize(),
+            dataType:'json',
+            success:function(result){
+                if(result.code == 200){
+                    alert(result.msg)
+                    location.href='/'
+                }else{
+                    alert(result.msg)
+                }
+            }
+        })
+    })
+
+</script>
+</html>
